@@ -12,8 +12,9 @@
 
 use alloy_sol_types::SolType;
 use clap::Parser;
-use fibonacci_lib::PublicValuesStruct;
 use sp1_sdk::{include_elf, ProverClient, SP1Stdin};
+use tracing::info;
+use sudoku_lib::sudoku::is_valid_sudoku_solution;
 
 /// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
 pub const FIBONACCI_ELF: &[u8] = include_elf!("fibonacci-program");
@@ -50,29 +51,23 @@ fn main() {
 
     // Setup the inputs.
     let mut stdin = SP1Stdin::new();
-    stdin.write(&args.n);
+    let initial_state: String = "..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..".to_string();
+    let solution = "483921657967345821251876493548132976729564138136798245372689514814253769695417382".to_string();
 
-    println!("n: {}", args.n);
+    info!("{}", is_valid_sudoku_solution(initial_state.clone(), solution.clone())); // true
+
+    stdin.write(&initial_state);
+    stdin.write(&solution);
 
     if args.execute {
         // Execute the program
         let (output, report) = client.execute(FIBONACCI_ELF, &stdin).run().unwrap();
-        println!("Program executed successfully.");
+        info!("Program executed successfully.");
 
-        // Read the output.
-        let decoded = PublicValuesStruct::abi_decode(output.as_slice()).unwrap();
-        let PublicValuesStruct { n, a, b } = decoded;
-        println!("n: {}", n);
-        println!("a: {}", a);
-        println!("b: {}", b);
-
-        let (expected_a, expected_b) = fibonacci_lib::fibonacci(n);
-        assert_eq!(a, expected_a);
-        assert_eq!(b, expected_b);
-        println!("Values are correct!");
+        info!("Values are correct!");
 
         // Record the number of cycles executed.
-        println!("Number of cycles: {}", report.total_instruction_count());
+        info!("Number of cycles: {}", report.total_instruction_count());
     } else {
         // Setup the program for proving.
         let (pk, vk) = client.setup(FIBONACCI_ELF);
@@ -83,10 +78,11 @@ fn main() {
             .run()
             .expect("failed to generate proof");
 
-        println!("Successfully generated proof!");
+        info!("Successfully generated proof!");
 
         // Verify the proof.
         client.verify(&proof, &vk).expect("failed to verify proof");
-        println!("Successfully verified proof!");
+        info!("Successfully verified proof!");
     }
 }
+
