@@ -7,6 +7,7 @@ use tracing::{error, info, warn};
 use tracing::subscriber::set_global_default;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 use sudoku::is_valid_sudoku_solution;
+use actix_cors::Cors;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Sudoku {
@@ -67,6 +68,12 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(Logger::default())
+            .wrap(
+                Cors::default()
+                    .allow_any_origin()
+                    .allow_any_method()
+                    .allow_any_header()
+            )
             .route("/check_solution", web::post().to(check_solution))
     })
         .bind("127.0.0.1:9090")?
