@@ -1,11 +1,10 @@
 [workspace]
 members = [
+    "sudoku",
     "lib",
     "program",
-    "script",
     "server",
 ]
 resolver = "2"
 
 [workspace.dependencies]
-alloy-sol-types = "1.0"

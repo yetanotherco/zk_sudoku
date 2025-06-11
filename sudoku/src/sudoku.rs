@@ -1,20 +1,7 @@
 /// Validates if a Sudoku solution is correct given an initial state.
 /// Both inputs are strings representing a 9x9 grid (81 characters, digits 1-9 or placeholders).
 /// Returns true if the solution is valid and respects the initial state, false otherwise.
-pub fn is_valid_sudoku_solution(initial: String, solution: String) -> bool {
-    // Helper to clean input strings: keep only digits and placeholders, ensure 81 chars
-    fn clean_grid(input: String) -> Option<Vec<char>> {
-        let cleaned: Vec<char> = input
-            .chars()
-            .filter(|c| c.is_digit(10) || *c == '.' || *c == '0' || *c == ' ')
-            .collect();
-        if cleaned.len() == 81 {
-            Some(cleaned)
-        } else {
-            None
-        }
-    }
-
+pub fn is_valid_sudoku_solution(initial: &str, solution: &str) -> bool {
     // Get cleaned grids
     let initial_grid = match clean_grid(initial) {
         Some(grid) => grid,
@@ -87,4 +74,17 @@ pub fn is_valid_sudoku_solution(initial: String, solution: String) -> bool {
     }
 
     true // Solution is valid
+}
+
+/// Helper to clean input strings: keep only digits and placeholders, ensure 81 chars
+fn clean_grid(input: &str) -> Option<Vec<char>> {
+    let cleaned: Vec<char> = input
+        .chars()
+        .filter(|c| c.is_digit(10) || *c == '.' || *c == '0' || *c == ' ')
+        .collect();
+    if cleaned.len() == 81 {
+        Some(cleaned)
+    } else {
+        None
+    }
 }

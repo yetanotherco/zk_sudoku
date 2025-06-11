@@ -1,12 +1,8 @@
-use actix_web::{web, App, HttpServer, Responder};
+use actix_web::{web, App, HttpServer, Responder, HttpResponse};
 use serde::{Deserialize, Serialize};
-use sudoku_lib::sudoku::is_valid_sudoku_solution;
-use sp1_sdk::{include_elf, ProverClient, SP1Stdin};
+use lib::sp1::generate_proof;
+use sudoku::is_valid_sudoku_solution;
 
-/// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
-pub const FIBONACCI_ELF: &[u8] = include_elf!("sudoku-program");
-
-#[allow(non_snake_case)]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Sudoku {
     pub initial_state: String,
@@ -16,34 +12,23 @@ pub struct Sudoku {
 async fn check_solution(
     body: web::Json<Sudoku>
 ) -> impl Responder {
-    // Setup the logger.
-    sp1_sdk::utils::setup_logger();
-    dotenv::dotenv().ok();
+    let initial_state = body.initial_state.as_str();
+    let solution = body.solution.as_str();
 
-    // Setup the prover client.
-    let client = ProverClient::from_env();
+    // Validate the Sudoku solution.
+    if !is_valid_sudoku_solution(initial_state, solution) {
+        return HttpResponse::BadRequest().body("Bad Request: Invalid input");
+    }
 
-    // Setup the inputs.
-    let mut stdin = SP1Stdin::new();
-    stdin.write(&body.initial_state);
-    stdin.write(&body.solution);
+    // Generate the proof.
+    let proof = match generate_proof(initial_state, solution) {
+        Ok(proof) => proof,
+        Err(e) => return HttpResponse::InternalServerError().body(format!("Internal Server Error: {}", e)),
+    };
 
-    // Setup the program for proving.
-    let (pk, vk) = client.setup(FIBONACCI_ELF);
+    // Send proof to aligned client.
 
-    // Generate the proof
-    let proof = client
-        .prove(&pk, &stdin)
-        .run()
-        .expect("failed to generate proof");
-
-    // Verify the proof.
-    client.verify(&proof, &vk).expect("failed to verify proof");
-
-    format!(
-        "Is the solution valid? {}",
-        is_valid_sudoku_solution(body.initial_state.clone(), body.solution.clone())
-    )
+    HttpResponse::Ok().json(proof)
 }
 
 #[actix_web::main]

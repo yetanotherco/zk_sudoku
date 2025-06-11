@@ -8,8 +8,7 @@
 #![no_main]
 sp1_zkvm::entrypoint!(main);
 
-use sudoku_lib::sudoku;
-use sudoku_lib::sudoku::is_valid_sudoku_solution;
+use sudoku::is_valid_sudoku_solution;
 
 pub fn main() {
     // Read an input to the program.
@@ -20,7 +19,7 @@ pub fn main() {
     let solution = sp1_zkvm::io::read::<String>();
     // println!("Initial State: {}", initial_state);
     // println!("Solution: {}", solution);
-    let is_valid = is_valid_sudoku_solution(initial_state, solution);
+    let is_valid = is_valid_sudoku_solution(initial_state.as_str(), solution.as_str());
 
     assert_eq!(is_valid, true, "The sudoku solution is not valid");
 }
