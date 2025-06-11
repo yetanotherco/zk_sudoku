@@ -2,7 +2,7 @@ use sp1_sdk::{HashableKey, include_elf, ProverClient, SP1Stdin};
 use serde::{Deserialize, Serialize};
 
 /// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
-pub const FIBONACCI_ELF: &[u8] = include_elf!("sudoku-program");
+pub const SUDOKU_ELF: &[u8] = include_elf!("sudoku-program");
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Proof {
@@ -11,10 +11,7 @@ pub struct Proof {
     pub vk: [u8; 32],
 }
 
-// TODO move to a different file (zk_helper.rs or similar)
 pub fn generate_proof(initial_state: &str, solution: &str, ) -> Result<Proof, String> {
-    // Setup the logger.
-    sp1_sdk::utils::setup_logger();
     dotenv::dotenv().ok();
 
     // Setup the prover client.
@@ -26,7 +23,7 @@ pub fn generate_proof(initial_state: &str, solution: &str, ) -> Result<Proof, St
     stdin.write(&solution.to_string());
 
     // Setup the program for proving.
-    let (pk, vk) = client.setup(FIBONACCI_ELF);
+    let (pk, vk) = client.setup(SUDOKU_ELF);
 
     // Generate the proof
     let proof = client
