@@ -1,6 +1,83 @@
-// Sample initial puzzle (can be replaced with a real generator)
-// const samplePuzzle = "2...8.3...6..7..84.3.5..2.9...1.54.8.........4.27.6...3.1..7.4.72..4..6...4.1...3";
-const samplePuzzle = "245981376169273584837564219976125438513498627482736951391657842728349165654812793"
+// Store the initial state of the current puzzle.
+let currentPuzzleInitialState = ""; // Will be set by generateNewPuzzle on load
+
+// Helper functions for Sudoku generation
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function isValidPlacement(board, row, col, num) {
+    // Check row: Ensure number is not already in the current row
+    for (let x = 0; x < 9; x++) {
+        if (board[row * 9 + x] === num) {
+            return false;
+        }
+    }
+    // Check column: Ensure number is not already in the current column
+    for (let y = 0; y < 9; y++) {
+        if (board[y * 9 + col] === num) {
+            return false;
+        }
+    }
+    // Check 3x3 subgrid: Ensure number is not in the 3x3 subgrid
+    const startRow = row - row % 3;
+    const startCol = col - col % 3;
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            if (board[(startRow + i) * 9 + (startCol + j)] === num) {
+                return false;
+            }
+        }
+    }
+    return true; // Number can be placed
+}
+
+// Backtracking solver to fill a Sudoku board
+// board is a 1D array of 81 numbers, 0 for empty
+function solveSudoku(board) {
+    for (let i = 0; i < 81; i++) {
+        if (board[i] === 0) { // Find an empty cell
+            let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            shuffleArray(numbers); // Try numbers in a random order
+
+            for (let num of numbers) {
+                if (isValidPlacement(board, Math.floor(i / 9), i % 9, num)) {
+                    board[i] = num; // Place the number
+                    if (solveSudoku(board)) { // Recursively solve
+                        return true; // Solution found
+                    }
+                    board[i] = 0; // Backtrack: reset cell and try next number
+                }
+            }
+            return false; // No valid number found for this cell, trigger backtracking
+        }
+    }
+    return true; // All cells are filled, solution found
+}
+
+// Generates a new Sudoku puzzle string (initial state)
+function generateSudokuBoardString() {
+    let board = Array(81).fill(0);
+    solveSudoku(board); // Fill the board completely with a valid Sudoku solution
+
+    // Remove some numbers to create a puzzle.
+    // Aim for a puzzle with a reasonable number of clues (e.g., 25-35).
+    // This means removing 81 - (25 to 35) = 46 to 56 cells.
+    // Let's remove around 50 cells to leave 31 clues.
+    let cellsToRemove = 50;
+    let indices = Array.from({length: 81}, (_, k) => k); // Get all cell indices
+    shuffleArray(indices); // Shuffle indices to remove cells randomly
+
+    for (let i = 0; i < cellsToRemove; i++) {
+        board[indices[i]] = 0; // Set cell to 0 (empty)
+    }
+
+    // Convert the board (0s for empty) to a string ('.' for empty)
+    return board.map(num => (num === 0 ? "." : String(num))).join("");
+}
 
 function createGrid() {
     const grid = document.getElementById("sudoku-grid");
@@ -27,11 +104,30 @@ function loadPuzzle(puzzle) {
 }
 
 function generateNewPuzzle() {
-    // In a real app, fetch a new puzzle from a server or generate one
-    loadPuzzle(samplePuzzle);
+    // Generate a new Sudoku puzzle string
+    currentPuzzleInitialState = generateSudokuBoardString();
+    // Load the new puzzle into the grid
+    loadPuzzle(currentPuzzleInitialState);
+    // Clear any previous response messages
     document.getElementById("response").innerHTML = "";
 }
 
+function solveCurrentPuzzle() {
+    // Convert the current puzzle string to a board array (0 for empty)
+    let board = currentPuzzleInitialState.split("").map(char => (char === "." ? 0 : parseInt(char)));
+
+    // Solve the Sudoku puzzle (solveSudoku modifies the board in place)
+    if (solveSudoku(board)) {
+        // Convert the solved board array back to a string
+        const solutionString = board.map(num => String(num)).join("");
+        // Load the solution onto the grid
+        loadPuzzle(solutionString);
+        document.getElementById("response").innerHTML = "Puzzle solved!";
+    } else {
+        // This should ideally not happen if generateSudokuBoardString always produces solvable puzzles
+        document.getElementById("response").innerHTML = "Could not solve the puzzle.";
+    }
+}
 function getSolution() {
     const cells = document.querySelectorAll(".cell");
     let solution = "";
@@ -42,7 +138,7 @@ function getSolution() {
 }
 
 async function submitSolution() {
-    const initialState = samplePuzzle; // Replace with actual initial state
+    const initialState = currentPuzzleInitialState; // Use the currently loaded puzzle's initial state
     const solution = getSolution();
     const data = {
         initial_state: initialState,
@@ -51,7 +147,7 @@ async function submitSolution() {
 
     // Show spinner
     const responseDiv = document.getElementById("response");
-    responseDiv.innerHTML = '<span class="spinner"></span> Submitting...';
+    responseDiv.innerHTML = '<span class="spinner"></span> Submitting... It may take 1 or 2 minutes.';
 
     try {
         const response = await fetch("http://localhost:9090/check_solution", {
@@ -61,8 +157,10 @@ async function submitSolution() {
             },
             body: JSON.stringify(data)
         });
-
-        if (!response.ok) throw new Error("Server error");
+        if (!response.ok) {
+            let errorText = await response.json();
+            throw new Error(errorText);
+        }
 
         const result = await response.json();
         const batchMerkleRoot = result.batch_merkle_root
@@ -79,4 +177,5 @@ async function submitSolution() {
 
 // Initialize grid on page load
 createGrid();
-loadPuzzle(samplePuzzle);
+// loadPuzzle(currentPuzzleInitialState); // Load the initial default puzzle
+generateNewPuzzle(); // Generate and load a new random puzzle on page load

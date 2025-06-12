@@ -29,7 +29,7 @@ async fn check_solution(
     // Validate the Sudoku solution.
     if !is_valid_sudoku_solution(initial_state, solution) {
         warn!("Invalid Sudoku solution: {} with initial state: {}", solution, initial_state);
-        return HttpResponse::BadRequest().json("Bad Request: Invalid input");
+        return HttpResponse::BadRequest().json("Invalid solution");
     }
     info!("Valid Sudoku solution: {} with initial state: {}",
           solution, initial_state);
@@ -77,7 +77,7 @@ async fn main() -> std::io::Result<()> {
         Err(e) => {
             error!("Failed to create AlignedClient: {}", e);
             // Exit if client creation fails, as it's essential for the server
-            return Err(std::io::Error::other(format!("Failed to create AlignedClient: {}", e)));        
+            return Err(std::io::Error::other(format!("Failed to create AlignedClient: {}", e)));
         }
     };
     let aligned_client_data = web::Data::new(aligned_client);
