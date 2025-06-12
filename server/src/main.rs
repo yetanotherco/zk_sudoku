@@ -9,9 +9,12 @@ use tracing_subscriber::{EnvFilter, FmtSubscriber};
 use sudoku::is_valid_sudoku_solution;
 use actix_cors::Cors;
 use lib::Network; // Import Network from lib crate
+use std::env;
 
-const RPC_URL: &str = "http://localhost:8545";
-const ANVIL_PRIVATE_KEY: &str = "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"; // Anvil address 9
+// Default values for environment/configuration
+const DEFAULT_RPC_URL: &str = "http://localhost:8545";
+const DEFAULT_NETWORK: &str = "devnet";
+const DEFAULT_ANVIL_PRIVATE_KEY: &str = "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6";
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Sudoku {
@@ -71,8 +74,28 @@ fn init_tracing() {
 async fn main() -> std::io::Result<()> {
     init_tracing();
 
+    // Read RPC_URL and NETWORK from environment variables or command line args
+    let args: Vec<String> = env::args().collect();
+    let rpc_url = args.get(1)
+        .map(|s| s.to_string())
+        .or_else(|| env::var("RPC_URL").ok())
+        .unwrap_or_else(|| DEFAULT_RPC_URL.to_string());
+    let network_str = args.get(2)
+        .map(|s| s.to_string())
+        .or_else(|| env::var("NETWORK").ok())
+        .unwrap_or_else(|| DEFAULT_NETWORK.to_string());
+    let private_key = env::var("ANVIL_PRIVATE_KEY").unwrap_or_else(|_| DEFAULT_ANVIL_PRIVATE_KEY.to_string());
+
+    let network = match network_str.to_lowercase().as_str() {
+        "devnet" => Network::Devnet,
+        "holesky" => Network::Holesky,
+        "holesky-stage" => Network::HoleskyStage,
+        "mainnet" => Network::Mainnet,
+        _ => Network::Devnet,
+    };
+
     // Create AlignedClient instance
-    let aligned_client = match AlignedClient::new(RPC_URL.to_string(), Network::Devnet, ANVIL_PRIVATE_KEY).await {
+    let aligned_client = match AlignedClient::new(rpc_url, network, &private_key).await {
         Ok(client) => client,
         Err(e) => {
             error!("Failed to create AlignedClient: {}", e);
@@ -82,10 +105,9 @@ async fn main() -> std::io::Result<()> {
     };
     let aligned_client_data = web::Data::new(aligned_client);
 
-
-    HttpServer::new(move || { // Add move here
+    HttpServer::new(move || {
         App::new()
-            .app_data(aligned_client_data.clone()) // Share AlignedClient with handlers
+            .app_data(aligned_client_data.clone())
             .wrap(Logger::default())
             .wrap(
                 Cors::default()
