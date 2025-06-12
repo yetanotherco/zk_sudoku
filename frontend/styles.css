@@ -113,3 +113,102 @@ button:hover {
 #response {
     font-size: 16px;
 }
+
+/* New styles for layout */
+.container {
+    display: flex;
+    justify-content: space-between; /* Align items with space in between */
+    align-items: flex-start; /* Align items to the top */
+    max-width: 1200px; /* Max width for the container */
+    margin: 0 auto; /* Center the container */
+    padding: 20px;
+}
+
+.main-content {
+    flex-grow: 1; /* Allow main content to grow */
+    /* text-align: center; /* Ensure its content (like h1) is centered if needed */
+}
+
+.sidebar {
+    width: 300px; /* Fixed width for the sidebar */
+    margin-left: 20px; /* Space between main content and sidebar */
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    height: calc(100vh - 40px); /* Adjust height to be viewport height minus padding */
+    overflow-y: auto; /* Add scroll if content overflows */
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-top: 0;
+}
+
+#history-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+#history-list li {
+    padding: 10px; /* Increased padding for list items */
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    display: flex; /* Use flexbox for better alignment of content within li */
+    flex-direction: column; /* Stack items vertically */
+    align-items: flex-start; /* Align items to the start of the flex container */
+}
+
+#history-list li:last-child {
+    border-bottom: none;
+}
+
+#history-list li a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+#history-list li a:hover {
+    text-decoration: underline;
+}
+
+/* Ensure the main sudoku grid and buttons remain centered within main-content */
+#sudoku-grid,
+.buttons,
+#response {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Styles for miniature history puzzle */
+.history-puzzle-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 20px); /* Smaller cells */
+    grid-template-rows: repeat(9, 20px);    /* Smaller cells */
+    gap: 1px;
+    background-color: #ccc; /* Lighter background for the grid lines */
+    border: 1px solid #999; /* Lighter border */
+    width: fit-content;
+    margin-top: 5px; /* Space above the grid */
+    margin-bottom: 5px; /* Space below the grid */
+}
+
+.history-puzzle-cell {
+    width: 20px;  /* Corresponds to grid-template-columns/rows */
+    height: 20px; /* Corresponds to grid-template-columns/rows */
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px; /* Smaller font */
+    border: 1px solid #ddd; /* Lighter cell borders */
+    text-align: center;
+    box-sizing: border-box; /* Ensure padding/border are included in width/height */
+}
+
+/* Optional: Style for pre-filled numbers in history if you add a specific class */
+/*
+.history-puzzle-cell-readonly {
+    font-weight: bold;
+    background-color: #f0f0f0;
+}
+*/

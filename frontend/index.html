@@ -8,14 +8,23 @@
 </head>
 <body>
 <div class="container">
-    <h1>Sudoku Game</h1>
-    <div id="sudoku-grid"></div>
-    <div class="buttons">
-        <button onclick="generateNewPuzzle()">New Puzzle</button>
-        <button onclick="solveCurrentPuzzle()">Solve Puzzle</button>
-        <button onclick="submitSolution()">Submit Solution</button>
+    <div class="main-content">
+        <h1>Sudoku Game</h1>
+        <div id="sudoku-grid"></div>
+        <div class="buttons">
+            <button onclick="generateNewPuzzle()">New Puzzle</button>
+            <button onclick="solveCurrentPuzzle()">Solve Puzzle</button>
+            <button onclick="submitSolution()">Submit Solution</button>
+        </div>
+        <div id="response" style="margin-top: 20px;"></div>
     </div>
-    <div id="response" style="margin-top: 20px;"></div>
+    <div class="sidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0;">History</h2>
+            <button id="clear-history-btn" style="font-size: 12px; padding: 4px 10px; margin-left: 10px;">Clear</button>
+        </div>
+        <ul id="history-list"></ul>
+    </div>
 </div>
 <script src="script.js"></script>
 </body>

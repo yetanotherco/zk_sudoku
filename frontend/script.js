@@ -169,6 +169,9 @@ async function submitSolution() {
         const link = `http://localhost:4000/batches/0x${batchMerkleRoot}`;
         responseDiv.innerHTML =
             `Solution submitted! <a href="${link}" target="_blank">View Batch</a>`;
+
+        // Add to history
+        addPuzzleToHistory(initialState, link);
     } catch (error) {
         responseDiv.innerHTML =
             `Error: ${error.message}`;
@@ -179,3 +182,68 @@ async function submitSolution() {
 createGrid();
 // loadPuzzle(currentPuzzleInitialState); // Load the initial default puzzle
 generateNewPuzzle(); // Generate and load a new random puzzle on page load
+loadHistory(); // Load history from localStorage
+
+function addPuzzleToHistory(puzzle, link) {
+    let history = JSON.parse(localStorage.getItem("sudokuHistory")) || [];
+
+    // Add new item to the beginning of the array
+    history.unshift({ puzzle, link, timestamp: new Date().toISOString() });
+
+    localStorage.setItem("sudokuHistory", JSON.stringify(history));
+    renderHistory();
+}
+
+function renderHistory() {
+    const historyList = document.getElementById("history-list");
+    historyList.innerHTML = ""; // Clear existing list
+
+    let history = JSON.parse(localStorage.getItem("sudokuHistory")) || [];
+
+    if (history.length === 0) {
+        historyList.innerHTML = "<li>No history yet.</li>";
+        return;
+    }
+
+    history.forEach(item => {
+        const listItem = document.createElement("li");
+
+        const itemDate = new Date(item.timestamp);
+        const titleHTML = `<strong>${itemDate.toLocaleDateString()} ${itemDate.toLocaleTimeString()}:</strong><br/>`;
+
+        // Create the miniature puzzle grid HTML string
+        let puzzleGridHTML = '<div class="history-puzzle-grid">';
+        for (let i = 0; i < 81; i++) {
+            puzzleGridHTML += `<div class="history-puzzle-cell">`;
+            if (item.puzzle[i] !== ".") {
+                puzzleGridHTML += item.puzzle[i];
+            }
+            puzzleGridHTML += '</div>';
+        }
+        puzzleGridHTML += '</div>';
+
+        const linkHTML = `<br/><a href="${item.link}" target="_blank">View Proof</a>`;
+
+        // Set the innerHTML of the list item once with the complete structure
+        listItem.innerHTML = titleHTML + puzzleGridHTML + linkHTML;
+
+        historyList.appendChild(listItem);
+    });
+}
+
+function loadHistory() {
+    renderHistory();
+}
+
+function clearHistory() {
+    localStorage.removeItem("sudokuHistory");
+    renderHistory();
+}
+
+// Attach event listener for clear history button after DOM is loaded
+window.addEventListener("DOMContentLoaded", function() {
+    const clearBtn = document.getElementById("clear-history-btn");
+    if (clearBtn) {
+        clearBtn.addEventListener("click", clearHistory);
+    }
+});
