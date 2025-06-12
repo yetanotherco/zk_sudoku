@@ -20,3 +20,6 @@ pgo-data.profdata
 
 # Env
 .env
+
+node_modules
+dist

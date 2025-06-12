@@ -312,3 +312,9 @@ window.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+
+// Export functions to window for HTML access
+window.generateNewPuzzle = generateNewPuzzle;
+window.solveCurrentPuzzle = solveCurrentPuzzle;
+window.submitSolution = submitSolution;
+window.clearHistory = clearHistory;

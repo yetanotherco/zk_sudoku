@@ -16,3 +16,8 @@ server_start_holesky:
 server_start_holesky_stage:
 	@echo "Running server with HoleskyStage config..."
 	cd server && RPC_URL=https://ethereum-holesky.publicnode.com ALIGNED_EXPLORER_URL=https://stage.explorer.alignedlayer.com NETWORK=holesky-stage cargo run --release
+
+frontend_build:
+	@echo "Building frontend..."
+	@cd frontend && npm install && npm run build
+	@echo "Frontend built successfully."
