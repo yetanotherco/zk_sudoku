@@ -193,22 +193,41 @@ button:hover {
 }
 
 .history-puzzle-cell {
-    width: 20px;  /* Corresponds to grid-template-columns/rows */
-    height: 20px; /* Corresponds to grid-template-columns/rows */
+    width: 20px;
+    height: 20px;
     background-color: #fff;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 10px; /* Smaller font */
-    border: 1px solid #ddd; /* Lighter cell borders */
+    font-size: 10px;
+    border: 1px solid #ddd;
     text-align: center;
-    box-sizing: border-box; /* Ensure padding/border are included in width/height */
+    box-sizing: border-box;
 }
 
-/* Optional: Style for pre-filled numbers in history if you add a specific class */
-/*
-.history-puzzle-cell-readonly {
-    font-weight: bold;
-    background-color: #f0f0f0;
+/* 3x3 subgrid thick borders for history board */
+.history-puzzle-cell {
+    border-right: 1px solid #bbb;
+    border-bottom: 1px solid #bbb;
 }
-*/
+.history-puzzle-cell:nth-child(9n) {
+    border-right: 2px solid #333;
+}
+.history-puzzle-cell:nth-child(n+73) {
+    border-bottom: 2px solid #333;
+}
+/* Left border for columns 1, 4, 7 */
+.history-puzzle-cell:nth-child(9n+1),
+.history-puzzle-cell:nth-child(9n+4),
+.history-puzzle-cell:nth-child(9n+7) {
+    border-left: 2px solid #333;
+}
+/* Top border for rows 1, 4, 7 */
+.history-puzzle-cell:nth-child(-n+9),
+.history-puzzle-cell:nth-child(n+28):nth-child(-n+36),
+.history-puzzle-cell:nth-child(n+55):nth-child(-n+63) {
+    border-top: 2px solid #333;
+}
+
+
+

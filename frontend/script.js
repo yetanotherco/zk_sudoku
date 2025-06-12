@@ -170,8 +170,8 @@ async function submitSolution() {
         responseDiv.innerHTML =
             `Solution submitted! <a href="${link}" target="_blank">View Batch</a>`;
 
-        // Add to history
-        addPuzzleToHistory(initialState, link);
+        // Add to history (store the solution as well)
+        addPuzzleToHistory(initialState, link, solution);
     } catch (error) {
         responseDiv.innerHTML =
             `Error: ${error.message}`;
@@ -184,11 +184,11 @@ createGrid();
 generateNewPuzzle(); // Generate and load a new random puzzle on page load
 loadHistory(); // Load history from localStorage
 
-function addPuzzleToHistory(puzzle, link) {
+function addPuzzleToHistory(puzzle, link, solution = null) {
     let history = JSON.parse(localStorage.getItem("sudokuHistory")) || [];
 
     // Add new item to the beginning of the array
-    history.unshift({ puzzle, link, timestamp: new Date().toISOString() });
+    history.unshift({ puzzle, link, solution, timestamp: new Date().toISOString() });
 
     localStorage.setItem("sudokuHistory", JSON.stringify(history));
     renderHistory();
@@ -212,9 +212,22 @@ function renderHistory() {
         const titleHTML = `<strong>${itemDate.toLocaleDateString()} ${itemDate.toLocaleTimeString()}:</strong><br/>`;
 
         // Create the miniature puzzle grid HTML string
-        let puzzleGridHTML = '<div class="history-puzzle-grid">';
+        let puzzleGridHTML = '<div class="history-puzzle-grid" tabindex="0" style="cursor:pointer;"';
+        if (item.solution) {
+            puzzleGridHTML += ' data-solved="1"';
+        }
+        puzzleGridHTML += '>';
         for (let i = 0; i < 81; i++) {
-            puzzleGridHTML += `<div class="history-puzzle-cell">`;
+            // Calculate subgrid index (0-8)
+            const row = Math.floor(i / 9);
+            const col = i % 9;
+            const subgrid = (Math.floor(row / 3) * 3 + Math.floor(col / 3));
+            const subgridType = (subgrid % 2 === 1) ? 'odd' : 'even';
+            puzzleGridHTML += `<div class="history-puzzle-cell" data-subgrid="${subgridType}"`;
+            if (item.solution) {
+                puzzleGridHTML += ` data-init="${item.puzzle[i]}" data-sol="${item.solution[i]}"`;
+            }
+            puzzleGridHTML += '>';
             if (item.puzzle[i] !== ".") {
                 puzzleGridHTML += item.puzzle[i];
             }
@@ -228,6 +241,32 @@ function renderHistory() {
         listItem.innerHTML = titleHTML + puzzleGridHTML + linkHTML;
 
         historyList.appendChild(listItem);
+    });
+
+    // Add hover event listeners for showing solved board
+    document.querySelectorAll('.history-puzzle-grid[data-solved="1"]').forEach(grid => {
+        grid.addEventListener('mouseenter', function() {
+            const cells = grid.querySelectorAll('.history-puzzle-cell');
+            cells.forEach(cell => {
+                const sol = cell.getAttribute('data-sol');
+                if (sol && sol !== '.' && cell.textContent !== sol) {
+                    cell.setAttribute('data-prev', cell.textContent);
+                    cell.textContent = sol;
+                    cell.style.backgroundColor = '#e0ffe0';
+                }
+            });
+        });
+        grid.addEventListener('mouseleave', function() {
+            const cells = grid.querySelectorAll('.history-puzzle-cell');
+            cells.forEach(cell => {
+                const prev = cell.getAttribute('data-prev');
+                if (typeof prev !== 'undefined' && prev !== null) {
+                    cell.textContent = prev;
+                    cell.removeAttribute('data-prev');
+                    cell.style.backgroundColor = '';
+                }
+            });
+        });
     });
 }
 
