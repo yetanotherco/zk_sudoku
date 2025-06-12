@@ -9,8 +9,12 @@
 <body>
 <div class="container">
     <div class="main-content">
-        <h1>Sudoku Game</h1>
+        <h1>ZK Sudoku</h1>
+        <div class="zk-sudoku-explanation">
+            <strong>ZK Sudoku</strong> is a Sudoku game that uses zero-knowledge proofs (ZKPs) to check your solution. When you solve a Sudoku puzzle and submit your answer, the app proves you solved it correctly—without revealing your solution. This proof is then verified by <a href="https://alignedlayer.com" target="_blank" rel="noopener">AlignedLayer</a>, so you can show you solved the puzzle without giving away your answer.
+        </div>
         <div id="sudoku-grid"></div>
+
         <div class="buttons">
             <button onclick="generateNewPuzzle()">New Puzzle</button>
             <button onclick="solveCurrentPuzzle()">Solve Puzzle</button>
@@ -20,9 +24,13 @@
     </div>
     <div class="sidebar">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="margin: 0;">History</h2>
-            <button id="clear-history-btn" style="font-size: 12px; padding: 4px 10px; margin-left: 10px;">Clear</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <h2 style="margin: 0;">History</h2>
+                <button id="help-history-btn" title="Help" style="font-size: 14px; padding: 4px 10px;">?</button>
+            </div>
+            <button id="clear-history-btn" style="font-size: 12px; padding: 4px 10px;">Clear</button>
         </div>
+        <div id="history-help-tooltip" class="history-help-tooltip" style="display:none;">Hovering over a board in the history will show the solution you submitted.</div>
         <ul id="history-list"></ul>
     </div>
 </div>

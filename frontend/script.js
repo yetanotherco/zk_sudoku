@@ -285,4 +285,22 @@ window.addEventListener("DOMContentLoaded", function() {
     if (clearBtn) {
         clearBtn.addEventListener("click", clearHistory);
     }
+    // Help button logic
+    const helpBtn = document.getElementById("help-history-btn");
+    const helpTooltip = document.getElementById("history-help-tooltip");
+    if (helpBtn && helpTooltip) {
+        helpBtn.addEventListener("click", function() {
+            if (helpTooltip.style.display === "none" || helpTooltip.style.display === "") {
+                helpTooltip.style.display = "block";
+            } else {
+                helpTooltip.style.display = "none";
+            }
+        });
+        // Hide tooltip if user clicks outside
+        document.addEventListener("click", function(e) {
+            if (!helpTooltip.contains(e.target) && e.target !== helpBtn) {
+                helpTooltip.style.display = "none";
+            }
+        });
+    }
 });
