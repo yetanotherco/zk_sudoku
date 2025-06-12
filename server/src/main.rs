@@ -1,13 +1,17 @@
 use actix_web::{web, App, HttpServer, Responder, HttpResponse};
 use actix_web::middleware::Logger;
 use serde::{Deserialize, Serialize};
-use lib::aligned;
+use lib::aligned::{AlignedClient}; // Import AlignedClient
 use lib::sp1::generate_proof;
 use tracing::{error, info, warn};
 use tracing::subscriber::set_global_default;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 use sudoku::is_valid_sudoku_solution;
 use actix_cors::Cors;
+use lib::Network; // Import Network from lib crate
+
+const RPC_URL: &str = "http://localhost:8545";
+const ANVIL_PRIVATE_KEY: &str = "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"; // Anvil address 9
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Sudoku {
@@ -16,7 +20,8 @@ pub struct Sudoku {
 }
 
 async fn check_solution(
-    body: web::Json<Sudoku>
+    body: web::Json<Sudoku>,
+    aligned_client: web::Data<AlignedClient> // Add AlignedClient to handler arguments
 ) -> impl Responder {
     let initial_state = body.initial_state.as_str();
     let solution = body.solution.as_str();
@@ -42,7 +47,8 @@ async fn check_solution(
 
     // Send proof to aligned client.
     info!("Sending proof to aligned client...");
-    match aligned::send_proof(proof.clone()).await {
+
+    match aligned_client.send_proof(proof.clone()).await {
         Ok(aligned_verification_data) => {
             info!("Proof sent successfully, aligned verification data: {:?}", aligned_verification_data);
             HttpResponse::Ok().json(aligned_verification_data)
@@ -65,8 +71,21 @@ fn init_tracing() {
 async fn main() -> std::io::Result<()> {
     init_tracing();
 
-    HttpServer::new(|| {
+    // Create AlignedClient instance
+    let aligned_client = match AlignedClient::new(RPC_URL.to_string(), Network::Devnet, ANVIL_PRIVATE_KEY).await {
+        Ok(client) => client,
+        Err(e) => {
+            error!("Failed to create AlignedClient: {}", e);
+            // Exit if client creation fails, as it's essential for the server
+            return Err(std::io::Error::other(format!("Failed to create AlignedClient: {}", e)));        
+        }
+    };
+    let aligned_client_data = web::Data::new(aligned_client);
+
+
+    HttpServer::new(move || { // Add move here
         App::new()
+            .app_data(aligned_client_data.clone()) // Share AlignedClient with handlers
             .wrap(Logger::default())
             .wrap(
                 Cors::default()
