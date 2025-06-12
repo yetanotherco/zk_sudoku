@@ -153,6 +153,13 @@ button:hover {
     background-color: #0056b3;
 }
 
+button:disabled, .buttons button:disabled {
+    background-color: #cccccc !important;
+    color: #888888 !important;
+    cursor: not-allowed !important;
+    border: none;
+}
+
 #response {
     font-size: 16px;
 }

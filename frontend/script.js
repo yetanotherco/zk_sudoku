@@ -147,7 +147,10 @@ async function submitSolution() {
 
     // Show spinner
     const responseDiv = document.getElementById("response");
-    responseDiv.innerHTML = '<span class="spinner"></span> Submitting... It may take 1 or 2 minutes.';
+    responseDiv.innerHTML = '<span class="spinner"></span> Submitting (It may take 1 or 2 minutes)...';
+
+    // Disable buttons while submitting
+    setButtonsDisabled(true);
 
     try {
         const response = await fetch("http://localhost:9090/check_solution", {
@@ -172,7 +175,15 @@ async function submitSolution() {
     } catch (error) {
         responseDiv.innerHTML =
             `Error: ${error.message}`;
+    } finally {
+        // Re-enable buttons after response
+        setButtonsDisabled(false);
     }
+}
+
+function setButtonsDisabled(disabled) {
+    const buttons = document.querySelectorAll('.buttons button');
+    buttons.forEach(btn => btn.disabled = disabled);
 }
 
 // Initialize grid on page load
