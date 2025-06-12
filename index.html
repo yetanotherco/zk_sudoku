@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZK Sudoku</title>
+    <style>body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 auto;
+    max-width: 800px;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 1;
+}
+
+.sidebar {
+    margin-left: 40px;
+    margin-right: 0;
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    height: auto;
+    overflow-y: auto;
+    z-index: 1;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-top: 0;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+.zk-sudoku-explanation {
+    margin-bottom: 24px;
+    margin-top: 8px;
+    line-height: 1.6;
+}
+
+#sudoku-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 50px);
+    grid-template-rows: repeat(9, 50px);
+    gap: 1px;
+    background-color: #000;
+    border: 6px solid #111;
+    width: fit-content;
+    margin: 24px auto 0;
+}
+
+.cell {
+    width: 50px;
+    height: 50px;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    border: 1px solid #bbb;
+    text-align: center;
+}
+
+/* 3x3 subgrid thick borders */
+/* Left border for columns 1, 4, 7 */
+.cell:nth-child(9n+1),
+.cell:nth-child(9n+4),
+.cell:nth-child(9n+7) {
+    border-left: 4px solid #111;
+}
+/* Top border for rows 1, 4, 7 */
+.cell:nth-child(-n+9),
+.cell:nth-child(n+28):nth-child(-n+36),
+.cell:nth-child(n+55):nth-child(-n+63) {
+    border-top: 4px solid #111;
+}
+/* Right border for last column */
+.cell:nth-child(9n) {
+    border-right: 4px solid #111;
+}
+/* Bottom border for last row */
+.cell:nth-child(n+73) {
+    border-bottom: 4px solid #111;
+}
+
+.cell:focus {
+    outline: none;
+    background-color: #e0f7fa;
+}
+
+.cell[readonly] {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.cell:nth-child(3n):not(:nth-child(9n)) {
+    border-right: 2px solid #000;
+}
+
+.cell:nth-child(n+19):nth-child(-n+27),
+.cell:nth-child(n+46):nth-child(-n+54),
+.cell:nth-child(n+73):nth-child(-n+81) {
+    border-bottom: 2px solid #000;
+}
+
+/* Make subgrid borders thicker and more visible */
+.cell:nth-child(9n) {
+    border-right: 4px solid #222;
+}
+
+.cell:nth-child(n+19):nth-child(-n+19),
+.cell:nth-child(n+46):nth-child(-n+46),
+.cell:nth-child(n+73):nth-child(-n+73) {
+    border-bottom: 6px solid #111;
+}
+
+.buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:disabled, .buttons button:disabled {
+    background-color: #cccccc !important;
+    color: #888888 !important;
+    cursor: not-allowed !important;
+    border: none;
+}
+
+#response {
+    font-size: 16px;
+}
+
+#history-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+#history-list li {
+    padding: 10px; /* Increased padding for list items */
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    display: flex; /* Use flexbox for better alignment of content within li */
+    flex-direction: column; /* Stack items vertically */
+    align-items: flex-start; /* Align items to the start of the flex container */
+}
+
+#history-list li:last-child {
+    border-bottom: none;
+}
+
+#history-list li a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+#history-list li a:hover {
+    text-decoration: underline;
+}
+
+/* Ensure the main sudoku grid and buttons remain centered within main-content */
+#sudoku-grid,
+.buttons,
+#response {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Styles for miniature history puzzle */
+.history-puzzle-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 20px); /* Smaller cells */
+    grid-template-rows: repeat(9, 20px);    /* Smaller cells */
+    gap: 1px;
+    background-color: #ccc; /* Lighter background for the grid lines */
+    border: 1px solid #999; /* Lighter border */
+    width: fit-content;
+    margin-top: 5px; /* Space above the grid */
+    margin-bottom: 5px; /* Space below the grid */
+}
+
+.history-puzzle-cell {
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* 3x3 subgrid thick borders for history board */
+.history-puzzle-cell {
+    border-right: 1px solid #bbb;
+    border-bottom: 1px solid #bbb;
+}
+.history-puzzle-cell:nth-child(9n) {
+    border-right: 2px solid #333;
+}
+.history-puzzle-cell:nth-child(n+73) {
+    border-bottom: 2px solid #333;
+}
+/* Left border for columns 1, 4, 7 */
+.history-puzzle-cell:nth-child(9n+1),
+.history-puzzle-cell:nth-child(9n+4),
+.history-puzzle-cell:nth-child(9n+7) {
+    border-left: 2px solid #333;
+}
+/* Top border for rows 1, 4, 7 */
+.history-puzzle-cell:nth-child(-n+9),
+.history-puzzle-cell:nth-child(n+28):nth-child(-n+36),
+.history-puzzle-cell:nth-child(n+55):nth-child(-n+63) {
+    border-top: 2px solid #333;
+}
+
+.history-help-tooltip {
+    display: none;
+    background: #fffbe6;
+    color: #333;
+    border: 1px solid #e0c97f;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 14px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    max-width: 260px;
+    z-index: 1;
+}
+
+#help-history-btn {
+    background-color: #f3f3f3;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    max-width: 28px;
+    max-height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+#help-history-btn:hover {
+    background-color: #e0e0e0;
+    color: #222;
+}
+
+@media (max-width: 1200px) {
+    .main-content {
+        max-width: calc(100vw - 360px);
+    }
+    .sidebar {
+        margin-left: 20px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .container {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px;
+    }
+    .main-content {
+        max-width: 100%;
+        margin: 0;
+    }
+    .sidebar {
+        width: 100%;
+        margin: 20px 0 0 0;
+        padding: 10px 0;
+    }
+}
+
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .sidebar {
+        width: 100%;
+        margin: 0 0 20px 0;
+        height: auto;
+    }
+    .main-content {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 5px;
+    }
+    .container {
+        padding: 5px;
+    }
+    .main-content {
+        max-width: 100vw;
+        padding: 0 2vw;
+    }
+    #sudoku-grid {
+        grid-template-columns: repeat(9, 8vw);
+        grid-template-rows: repeat(9, 8vw);
+        border-width: 3vw;
+    }
+    .cell {
+        width: 8vw;
+        height: 8vw;
+        font-size: 4vw;
+    }
+    .sidebar {
+        padding: 8px 0;
+    }
+    .history-puzzle-grid {
+        grid-template-columns: repeat(9, 3vw);
+        grid-template-rows: repeat(9, 3vw);
+    }
+    .history-puzzle-cell {
+        width: 3vw;
+        height: 3vw;
+        font-size: 1.5vw;
+    }
+    .buttons button {
+        font-size: 4vw;
+        padding: 2vw 4vw;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="main-content">
+        <h1>ZK Sudoku</h1>
+        <div class="zk-sudoku-explanation">
+            <strong>ZK Sudoku</strong> is a Sudoku game that uses zero-knowledge proofs (ZKPs) to check your solution. When you solve a Sudoku puzzle and submit your answer, the app proves you solved it correctly—without revealing your solution. This proof is then verified by <a href="https://alignedlayer.com" target="_blank" rel="noopener">AlignedLayer</a>, so you can show you solved the puzzle without giving away your answer.
+        </div>
+        <div id="sudoku-grid"></div>
+
+        <div class="buttons">
+            <button onclick="generateNewPuzzle()">New Puzzle</button>
+            <button onclick="solveCurrentPuzzle()">Solve Puzzle</button>
+            <button onclick="submitSolution()">Submit Solution</button>
+        </div>
+        <div id="response" style="margin-top: 20px;"></div>
+    </div>
+    <div class="sidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <h2 style="margin: 0;">History</h2>
+                <button id="help-history-btn" title="Help" style="font-size: 14px; padding: 4px 10px;">?</button>
+            </div>
+            <button id="clear-history-btn" style="font-size: 12px; padding: 4px 10px;">Clear</button>
+        </div>
+        <div id="history-help-tooltip" class="history-help-tooltip" style="display:none;">Hovering over a board in the history will show the solution you submitted.</div>
+        <ul id="history-list"></ul>
+    </div>
+</div>
+<script>(()=>{let t="";function e(t){for(let e=t.length-1;e>0;e--){const n=Math.floor(Math.random()*(e+1));[t[e],t[n]]=[t[n],t[e]]}}function n(t,e,n,o){for(let n=0;n<9;n++)if(t[9*e+n]===o)return!1;for(let e=0;e<9;e++)if(t[9*e+n]===o)return!1;const l=e-e%3,r=n-n%3;for(let e=0;e<3;e++)for(let n=0;n<3;n++)if(t[9*(l+e)+(r+n)]===o)return!1;return!0}function o(t){for(let l=0;l<81;l++)if(0===t[l]){let r=[1,2,3,4,5,6,7,8,9];e(r);for(let e of r)if(n(t,Math.floor(l/9),l%9,e)){if(t[l]=e,o(t))return!0;t[l]=0}return!1}return!0}function l(t){const e=document.querySelectorAll(".cell");for(let n=0;n<81;n++)e[n].value="."===t[n]?"":t[n],e[n].readOnly="."!==t[n]}function r(){t=function(){let t=Array(81).fill(0);o(t);let n=Array.from({length:81},((t,e)=>e));e(n);for(let e=0;e<50;e++)t[n[e]]=0;return t.map((t=>0===t?".":String(t))).join("")}(),l(t),document.getElementById("response").innerHTML=""}function i(t){document.querySelectorAll(".buttons button").forEach((e=>e.disabled=t))}function s(){const t=document.getElementById("history-list");t.innerHTML="";let e=JSON.parse(localStorage.getItem("sudokuHistory"))||[];0!==e.length?(e.forEach((e=>{const n=document.createElement("li"),o=new Date(e.timestamp),l=`<strong>${o.toLocaleDateString()} ${o.toLocaleTimeString()}:</strong><br/>`;let r='<div class="history-puzzle-grid" tabindex="0" style="cursor:pointer;"';e.solution&&(r+=' data-solved="1"'),r+=">";for(let t=0;t<81;t++){const n=Math.floor(t/9),o=t%9;r+=`<div class="history-puzzle-cell" data-subgrid="${(3*Math.floor(n/3)+Math.floor(o/3))%2==1?"odd":"even"}"`,e.solution&&(r+=` data-init="${e.puzzle[t]}" data-sol="${e.solution[t]}"`),r+=">","."!==e.puzzle[t]&&(r+=e.puzzle[t]),r+="</div>"}r+="</div>";const i=`<br/><a href="${e.link}" target="_blank">View Proof</a>`;n.innerHTML=l+r+i,t.appendChild(n)})),document.querySelectorAll('.history-puzzle-grid[data-solved="1"]').forEach((t=>{t.addEventListener("mouseenter",(function(){t.querySelectorAll(".history-puzzle-cell").forEach((t=>{const e=t.getAttribute("data-sol");e&&"."!==e&&t.textContent!==e&&(t.setAttribute("data-prev",t.textContent),t.textContent=e,t.style.backgroundColor="#e0ffe0")}))})),t.addEventListener("mouseleave",(function(){t.querySelectorAll(".history-puzzle-cell").forEach((t=>{const e=t.getAttribute("data-prev");null!=e&&(t.textContent=e,t.removeAttribute("data-prev"),t.style.backgroundColor="")}))}))}))):t.innerHTML="<li>No history yet.</li>"}function a(){localStorage.removeItem("sudokuHistory"),s()}!function(){const t=document.getElementById("sudoku-grid");t.innerHTML="";for(let e=0;e<81;e++){const e=document.createElement("input");e.className="cell",e.type="text",e.maxLength=1,e.pattern="[1-9]",e.oninput=()=>{/[1-9]/.test(e.value)||(e.value="")},t.appendChild(e)}}(),r(),s(),window.addEventListener("DOMContentLoaded",(function(){const t=document.getElementById("clear-history-btn");t&&t.addEventListener("click",a);const e=document.getElementById("help-history-btn"),n=document.getElementById("history-help-tooltip");e&&n&&(e.addEventListener("click",(function(){"none"===n.style.display||""===n.style.display?n.style.display="block":n.style.display="none"})),document.addEventListener("click",(function(t){n.contains(t.target)||t.target===e||(n.style.display="none")})))})),window.generateNewPuzzle=r,window.solveCurrentPuzzle=function(){let e=t.split("").map((t=>"."===t?0:parseInt(t)));o(e)?(l(e.map((t=>String(t))).join("")),document.getElementById("response").innerHTML="Puzzle solved!"):document.getElementById("response").innerHTML="Could not solve the puzzle."},window.submitSolution=async function(){const e=t,n=function(){const t=document.querySelectorAll(".cell");let e="";for(let n=0;n<81;n++)e+=t[n].value||".";return e}(),o={initial_state:e,solution:n},l=document.getElementById("response");l.innerHTML='<span class="spinner"></span> Submitting (It may take 1 or 2 minutes)...',i(!0);try{const t=await fetch("http://localhost:9090/check_solution",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(o)});if(!t.ok){let e=await t.json();throw new Error(e)}const r=(await t.json()).link;l.innerHTML=`Solution submitted! <a href="${r}" target="_blank">View Batch</a>`,function(t,e,n=null){let o=JSON.parse(localStorage.getItem("sudokuHistory"))||[];o.unshift({puzzle:t,link:e,solution:n,timestamp:(new Date).toISOString()}),localStorage.setItem("sudokuHistory",JSON.stringify(o)),s()}(e,r,n)}catch(t){l.innerHTML=`Error: ${t.message}`}finally{i(!1)}},window.clearHistory=a})();</script>
+</body>
+</html>
