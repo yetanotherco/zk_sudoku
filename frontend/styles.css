@@ -8,7 +8,35 @@ body {
 }
 
 .container {
-    text-align: center;
+    display: flex;
+    justify-content: center; /* Center the main content */
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+}
+
+.main-content {
+    flex: 0 1 auto;
+    margin: 0 auto;
+    /* Center the main content horizontally */
+}
+
+.sidebar {
+    position: fixed;
+    top: 40px;
+    right: 0;
+    width: 300px;
+    margin-left: 20px;
+    margin-right: 20px; /* Add margin to the right */
+    margin-top: 20px;   /* Add margin to the top */
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    height: calc(100vh - 60px); /* Adjust height for new top margin */
+    overflow-y: auto;
+    z-index: 10;
 }
 
 h1 {
@@ -129,16 +157,6 @@ button:hover {
     /* text-align: center; /* Ensure its content (like h1) is centered if needed */
 }
 
-.sidebar {
-    width: 300px; /* Fixed width for the sidebar */
-    margin-left: 20px; /* Space between main content and sidebar */
-    padding: 10px;
-    border: 1px solid #ccc;
-    background-color: #f9f9f9;
-    height: calc(100vh - 40px); /* Adjust height to be viewport height minus padding */
-    overflow-y: auto; /* Add scroll if content overflows */
-}
-
 .sidebar h2 {
     text-align: center;
     margin-top: 0;
@@ -228,6 +246,3 @@ button:hover {
 .history-puzzle-cell:nth-child(n+55):nth-child(-n+63) {
     border-top: 2px solid #333;
 }
-
-
-
