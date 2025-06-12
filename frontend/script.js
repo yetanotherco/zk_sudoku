@@ -163,10 +163,7 @@ async function submitSolution() {
         }
 
         const result = await response.json();
-        const batchMerkleRoot = result.batch_merkle_root
-            .map(byte => byte.toString(16).padStart(2, "0"))
-            .join("");
-        const link = `http://localhost:4000/batches/0x${batchMerkleRoot}`;
+        const link = result.link;
         responseDiv.innerHTML =
             `Solution submitted! <a href="${link}" target="_blank">View Batch</a>`;
 

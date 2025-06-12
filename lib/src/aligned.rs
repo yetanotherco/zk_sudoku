@@ -8,12 +8,13 @@ use crate::sp1::{Proof, SUDOKU_ELF};
 
 pub struct AlignedClient {
     rpc_url: String,
+    explorer_url: String,
     network: Network,
     wallet: LocalWallet,
 }
 
 impl AlignedClient {
-    pub async fn new(rpc_url: String, network: Network, private_key: &str) -> Result<Self, String> {
+    pub async fn new(rpc_url: String, explorer_url: String, network: Network, private_key: &str) -> Result<Self, String> {
         let mut wallet = LocalWallet::from_str(private_key)
             .map_err(|e| format!("Failed to create wallet: {}", e))?;
         let chain_id = get_chain_id(&rpc_url)
@@ -22,6 +23,7 @@ impl AlignedClient {
         wallet = wallet.with_chain_id(chain_id);
         Ok(Self {
             rpc_url,
+            explorer_url,
             network,
             wallet,
         })
@@ -69,5 +71,10 @@ impl AlignedClient {
             })?;
         
         Ok(aligned_verification_data)
+    }
+    
+    pub fn get_batch_url(&self, aligned_verification_data: AlignedVerificationData) -> String {
+        let batch_merkle_root_hex = hex::encode(aligned_verification_data.batch_merkle_root);
+        format!("{}/batches/0x{}", self.explorer_url, batch_merkle_root_hex)
     }
 }

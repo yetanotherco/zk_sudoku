@@ -8,7 +8,7 @@ use tracing::subscriber::set_global_default;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 use sudoku::is_valid_sudoku_solution;
 use actix_cors::Cors;
-use lib::Network; // Import Network from lib crate
+use lib::{AlignedVerificationData, Network}; // Import Network from lib crate
 use std::env;
 
 // Default values for environment/configuration
@@ -22,9 +22,16 @@ pub struct Sudoku {
     pub solution: String,
 }
 
+// Add a struct for the response
+#[derive(Debug, Serialize)]
+pub struct ProofResponse {
+    pub aligned_verification_data: AlignedVerificationData,
+    pub link: String,
+}
+
 async fn check_solution(
     body: web::Json<Sudoku>,
-    aligned_client: web::Data<AlignedClient> // Add AlignedClient to handler arguments
+    aligned_client: web::Data<AlignedClient>
 ) -> impl Responder {
     let initial_state = body.initial_state.as_str();
     let solution = body.solution.as_str();
@@ -54,7 +61,11 @@ async fn check_solution(
     match aligned_client.send_proof(proof.clone()).await {
         Ok(aligned_verification_data) => {
             info!("Proof sent successfully, aligned verification data: {:?}", aligned_verification_data);
-            HttpResponse::Ok().json(aligned_verification_data)
+            let link = aligned_client.get_batch_url(aligned_verification_data.clone());
+            HttpResponse::Ok().json(ProofResponse {
+                aligned_verification_data,
+                link
+            })
         },
         Err(e) => {
             error!("Failed to send proof: {}", e);
@@ -85,6 +96,10 @@ async fn main() -> std::io::Result<()> {
         .or_else(|| env::var("NETWORK").ok())
         .unwrap_or_else(|| DEFAULT_NETWORK.to_string());
     let private_key = env::var("ANVIL_PRIVATE_KEY").unwrap_or_else(|_| DEFAULT_ANVIL_PRIVATE_KEY.to_string());
+    let aligned_explorer_url = args.get(3)
+        .map(|s| s.to_string())
+        .or_else(|| env::var("ALIGNED_EXPLORER_URL").ok())
+        .unwrap_or_else(|| "http://localhost:4000".to_string());
 
     let network = match network_str.to_lowercase().as_str() {
         "devnet" => Network::Devnet,
@@ -95,7 +110,7 @@ async fn main() -> std::io::Result<()> {
     };
 
     // Create AlignedClient instance
-    let aligned_client = match AlignedClient::new(rpc_url, network, &private_key).await {
+    let aligned_client = match AlignedClient::new(rpc_url, aligned_explorer_url, network, &private_key).await {
         Ok(client) => client,
         Err(e) => {
             error!("Failed to create AlignedClient: {}", e);

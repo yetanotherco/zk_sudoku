@@ -13,7 +13,7 @@ pub fn is_valid_sudoku_solution(initial: &str, solution: &str) -> bool {
     };
 
     // Check if solution respects initial state
-    for (i, (init, sol)) in initial_grid.iter().zip(solution_grid.iter()).enumerate() {
+    for (init, sol) in initial_grid.iter().zip(solution_grid.iter()) {
         if *init != '.' && *init != '0' && *init != ' ' && *init != *sol {
             return false; // Solution doesn't match initial state's filled cells
         }
