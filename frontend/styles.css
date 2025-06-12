@@ -289,6 +289,23 @@ button:hover {
     }
 }
 
+@media (max-width: 1000px) {
+    .container {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px;
+    }
+    .main-content {
+        max-width: 100%;
+        margin: 0;
+    }
+    .sidebar {
+        width: 100%;
+        margin: 20px 0 0 0;
+        padding: 10px 0;
+    }
+}
+
 @media (max-width: 900px) {
     .container {
         flex-direction: column;
@@ -301,5 +318,44 @@ button:hover {
     }
     .main-content {
         max-width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 5px;
+    }
+    .container {
+        padding: 5px;
+    }
+    .main-content {
+        max-width: 100vw;
+        padding: 0 2vw;
+    }
+    #sudoku-grid {
+        grid-template-columns: repeat(9, 8vw);
+        grid-template-rows: repeat(9, 8vw);
+        border-width: 3vw;
+    }
+    .cell {
+        width: 8vw;
+        height: 8vw;
+        font-size: 4vw;
+    }
+    .sidebar {
+        padding: 8px 0;
+    }
+    .history-puzzle-grid {
+        grid-template-columns: repeat(9, 3vw);
+        grid-template-rows: repeat(9, 3vw);
+    }
+    .history-puzzle-cell {
+        width: 3vw;
+        height: 3vw;
+        font-size: 1.5vw;
+    }
+    .buttons button {
+        font-size: 4vw;
+        padding: 2vw 4vw;
     }
 }
