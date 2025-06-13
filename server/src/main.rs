@@ -8,9 +8,11 @@ use tracing::subscriber::set_global_default;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 use sudoku::is_valid_sudoku_solution;
 use actix_cors::Cors;
-use lib::{AlignedVerificationData, Network}; // Import Network from lib crate
+use lib::{AlignedVerificationData, Network, send_messages, VerificationData}; // Import Network from lib crate
 use std::env;
-use tokio::sync::{mpsc, oneshot};
+use std::sync::Arc;
+use tokio::sync::{mpsc, Mutex, oneshot};
+use tokio_tungstenite::connect_async;
 
 // Default values for environment/configuration
 const DEFAULT_RPC_URL: &str = "http://localhost:8545";
@@ -26,7 +28,7 @@ pub struct Sudoku {
 // Add a struct for the response
 #[derive(Debug, Serialize)]
 pub struct ProofResponse {
-    pub aligned_verification_data: AlignedVerificationData,
+    pub verification_data: VerificationData,
     pub link: String,
 }
 
@@ -35,6 +37,12 @@ pub struct ProofRequest {
     pub initial_state: String,
     pub solution: String,
     pub response: oneshot::Sender<Result<lib::sp1::Proof, String>>,
+}
+
+#[derive(Debug)]
+pub struct AlignedRequest {
+    pub aligned_verification_data: AlignedVerificationData,
+    pub response: oneshot::Sender<Result<AlignedVerificationData, String>>,
 }
 
 async fn request_proof(
@@ -88,7 +96,7 @@ async fn check_solution(
             info!("Proof sent successfully, aligned verification data: {:?}", aligned_verification_data);
             let link = aligned_client.get_batch_url(aligned_verification_data.clone());
             HttpResponse::Ok().json(ProofResponse {
-                aligned_verification_data,
+                verification_data,
                 link
             })
         },
@@ -119,6 +127,32 @@ fn start_proof_generation_task() -> mpsc::Sender<ProofRequest> {
         }
     });
     proof_tx
+}
+
+fn start_aligned_submitter_task(network: Network) -> mpsc::Sender<AlignedRequest> {
+    let (aligned_tx, mut aligned_rx) = mpsc::channel::<AlignedVerificationData>(8);
+    tokio::spawn(async move {
+        // Create a connection with the batcher
+        let (ws_stream, _) = match connect_async(network.get_batcher_url()).await {
+            Ok((ws_stream, response)) => (ws_stream, response),
+            Err(e) => return error!("Failed to connect to batcher: {}", e),
+        };
+        let (ws_tx, mut ws_rx) = ws_stream.split();
+        let ws_tx = Arc::new(Mutex::new(ws_tx));
+        while let Some(aligned_data) = aligned_rx.recv().await {
+            info!("Submitting aligned verification data: {:?}", aligned_data);
+            send_messages(
+                ws_tx.clone(),
+                network.get_batcher_payment_service_address(),
+                vec![aligned_data.clone()].as_slice(),
+                
+                
+                
+            )
+            info!("Aligned verification data submitted successfully");
+        }
+    });
+    
 }
 
 #[actix_web::main]
