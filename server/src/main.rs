@@ -28,7 +28,7 @@ pub struct Sudoku {
 // Add a struct for the response
 #[derive(Debug, Serialize)]
 pub struct ProofResponse {
-    pub verification_data: VerificationData,
+    pub aligned_verification_data: AlignedVerificationData,
     pub link: String,
 }
 
@@ -41,7 +41,7 @@ pub struct ProofRequest {
 
 #[derive(Debug)]
 pub struct AlignedRequest {
-    pub aligned_verification_data: AlignedVerificationData,
+    pub verification_data: VerificationData,
     pub response: oneshot::Sender<Result<AlignedVerificationData, String>>,
 }
 
@@ -96,7 +96,7 @@ async fn check_solution(
             info!("Proof sent successfully, aligned verification data: {:?}", aligned_verification_data);
             let link = aligned_client.get_batch_url(aligned_verification_data.clone());
             HttpResponse::Ok().json(ProofResponse {
-                verification_data,
+                aligned_verification_data,
                 link
             })
         },
