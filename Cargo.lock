@@ -5377,6 +5377,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sudoku",
+ "tokio",
  "tracing",
  "tracing-subscriber",
  "uuid 1.17.0",

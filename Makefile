@@ -5,7 +5,7 @@ elf_build:
 	@cd program && cargo prove build
 	@echo "ELF file built successfully."
 
-server_run:
+server_start:
 	@echo "Running server..."
 	@cd server && cargo run --release
 
